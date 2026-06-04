@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PBS IT Asset Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f5f8;--surface:#fff;--surface2:#eef1f7;--surface3:#e2e6f0;
+  --border:#c8cedc;--border2:#b0b8cc;
+  --text:#0d1829;--text2:#3d4f6e;--text3:#6a7d99;
+  --gold:#f0c040;--green:#1a7a3c;--green-bg:#edf7f1;--green-text:#0f5228;
+  --amber:#b87000;--amber-bg:#fdf5e0;--amber-text:#7a4a00;
+  --red:#c02020;--red-bg:#fdf0f0;--red-text:#8a1515;
+  --blue-bg:#e8edf7;--blue-text:#0d2b5e;
+  --font-mono:'IBM Plex Mono',monospace;--font-sans:'IBM Plex Sans',sans-serif;
+}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-box{background:var(--surface);border:1px solid var(--border);padding:40px;width:340px}
+.login-box h1{font-family:var(--font-mono);font-size:16px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:4px}
+.login-box p{font-size:12px;color:var(--text3);margin-bottom:28px;font-family:var(--font-mono)}
+.login-box label{display:block;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:6px}
+.login-box input{width:100%;border:1px solid var(--border);background:var(--surface2);padding:10px 12px;font-family:var(--font-mono);font-size:13px;color:var(--text);outline:none;margin-bottom:16px}
+.login-box input:focus{border-color:var(--text);background:var(--surface)}
+.login-err{font-size:12px;color:var(--red);font-family:var(--font-mono);margin-top:-8px;margin-bottom:12px;display:none}
+.btn-primary{width:100%;background:#0d2b5e;color:#fff;border:none;padding:11px;font-family:var(--font-mono);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer}
+.btn-primary:hover{background:#0a2050}
+#app{display:none;min-height:100vh;flex-direction:column}
+header{background:#0d2b5e;border-bottom:1px solid #0a2050;display:flex;align-items:center;padding:0 20px;height:52px}
+.header-logo{font-family:var(--font-mono);font-size:13px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:#fff;margin-right:32px;white-space:nowrap}
+.header-logo span{color:#f0c040}
+nav{display:flex;align-items:center;gap:2px;flex:1}
+nav button{border:none;background:none;padding:6px 14px;font-family:var(--font-mono);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:#a8bcd8;cursor:pointer;border-bottom:2px solid transparent;height:52px;margin-bottom:-1px}
+nav button:hover{color:#fff;background:rgba(255,255,255,0.1)}
+nav button.active{color:#f0c040;border-bottom-color:#f0c040}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.btn-sm{border:1px solid rgba(255,255,255,0.3);background:none;padding:5px 12px;font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;color:#c8d8f0}
+.btn-sm:hover{background:rgba(255,255,255,0.15);color:#fff}
+.btn-sm.gold{background:#f0c040;border-color:#f0c040;color:#0d2b5e}
+.btn-sm.gold:hover{background:#ddb030}
+.btn-sm.plain{border:1px solid var(--border);background:none;color:var(--text2)}
+.btn-sm.plain:hover{background:var(--surface2);color:var(--text)}
+main{flex:1;padding:24px;max-width:1400px;width:100%;margin:0 auto}
+.view{display:none}.view.active{display:block}
+.view-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.view-title{font-family:var(--font-mono);font-size:14px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);padding:14px 16px}
+.stat-label{font-size:11px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);margin-bottom:4px}
+.stat-value{font-size:22px;font-weight:500;font-family:var(--font-mono);color:var(--text)}
+.stat-value.warn{color:var(--amber)}.stat-value.danger{color:var(--red)}
+.search-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.search-bar input,.search-bar select{border:1px solid var(--border);background:var(--surface);padding:8px 12px;font-family:var(--font-mono);font-size:12px;color:var(--text);outline:none}
+.search-bar input{flex:1;min-width:200px}.search-bar select{min-width:140px}
+.table-wrap{background:var(--surface);border:1px solid var(--border);overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{background:var(--surface2)}
+th{text-align:left;padding:9px 12px;font-family:var(--font-mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.07em;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--border2);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.mono{font-family:var(--font-mono);font-size:11px}
+.tbl-actions{display:flex;gap:4px}
+.tbl-btn{border:1px solid var(--border);background:none;padding:3px 8px;font-size:10px;font-family:var(--font-mono);cursor:pointer;color:var(--text2);text-transform:uppercase}
+.tbl-btn:hover{background:var(--surface2)}.tbl-btn.del:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.badge{display:inline-block;padding:2px 8px;font-size:10px;font-family:var(--font-mono);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;border-radius:2px}
+.bg{background:var(--green-bg);color:var(--green-text)}
+.br{background:var(--red-bg);color:var(--red-text)}
+.ba{background:var(--amber-bg);color:var(--amber-text)}
+.bb{background:var(--blue-bg);color:var(--blue-text)}
+.bl{background:#f0e8ff;color:#6b21a8}
+.bx{background:var(--surface3);color:var(--text2)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);width:100%;max-width:720px;max-height:calc(100vh - 80px);overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-title{font-family:var(--font-mono);font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em}
+.modal-close{border:none;background:none;font-size:20px;cursor:pointer;color:var(--text2);line-height:1;padding:0 4px}
+.modal-body{padding:20px}
+.modal-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface)}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fgf{grid-column:1/-1}
+.fg-sec{font-family:var(--font-mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);padding:14px 0 8px;border-top:1px solid var(--border2);grid-column:1/-1;margin-top:6px}
+.fg-sec:first-child{border-top:none;padding-top:0;margin-top:0}
+.fgrp{display:flex;flex-direction:column;gap:5px}
+label.fl{font-size:11px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);font-weight:500}
+input.fi,select.fi,textarea.fi{border:1px solid var(--border);background:var(--surface2);padding:8px 10px;font-family:var(--font-mono);font-size:12px;color:var(--text);outline:none;width:100%}
+input.fi:focus,select.fi:focus,textarea.fi:focus{border-color:var(--text);background:var(--surface)}
+textarea.fi{resize:vertical;min-height:70px}
+.ss{background:var(--surface);border:1px solid var(--border);margin-bottom:16px}
+.ss-hdr{padding:12px 16px;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2)}
+.ss-body{padding:16px}
+.stag-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.stag{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);padding:5px 10px;font-family:var(--font-mono);font-size:12px}
+.stag button{border:none;background:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0}
+.stag button:hover{color:var(--red)}
+.add-row{display:flex;gap:8px}
+.alert-banner{background:var(--amber-bg);border:1px solid #e0b84a;padding:10px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:12px;font-family:var(--font-mono)}
+.alert-banner.danger{background:var(--red-bg);border-color:#e08080}
+.empty{text-align:center;padding:48px 20px;color:var(--text3);font-family:var(--font-mono);font-size:12px}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{border:none;background:none;padding:8px 16px;font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--text);border-bottom-color:#f0c040}
+.tab:hover:not(.active){background:var(--surface2)}
+.sync-bar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);margin-bottom:16px;font-family:var(--font-mono);font-size:11px;color:var(--text2)}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.sdot.syncing{background:var(--amber);animation:pulse 1s infinite}
+.sdot.err{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.dr-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:var(--surface2);border:1px solid var(--border)}
+.dr-bar span{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2)}
+.hi{padding:10px 0;border-bottom:1px solid var(--border2);display:flex;gap:12px;align-items:flex-start}
+.hi:last-child{border-bottom:none}
+.hdot{width:8px;height:8px;border-radius:50%;background:var(--green);margin-top:6px;flex-shrink:0}
+.hmeta{font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-top:2px}
+@media(max-width:600px){.fg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="login-screen">
+  <div class="login-box">
+    <h1>PBS IT Asset <span style="color:#0d2b5e">Tracker</span></h1>
+    <p>// PBS Department Equipment Management</p>
+    <label>Password</label>
+    <input type="password" id="pw-input" placeholder="Enter password">
+    <div class="login-err" id="login-err">Incorrect password</div>
+    <button class="btn-primary" id="login-btn">Sign In</button>
+    <p style="font-size:10px;color:var(--text3);margin-top:16px;font-family:var(--font-mono)">Default password: admin123</p>
+  </div>
+</div>
+<div id="app" style="display:none;flex-direction:column">
+  <header>
+    <div class="header-logo">PBS IT Asset <span>Tracker</span></div>
+    <nav>
+      <button class="active" id="nav-dashboard" onclick="showView('dashboard')">Dashboard</button>
+      <button id="nav-staff" onclick="showView('staff')">Staff</button>
+      <button id="nav-devices" onclick="showView('devices')">Devices</button>
+      <button id="nav-reports" onclick="showView('reports')">Reports</button>
+      <button id="nav-settings" onclick="showView('settings')">Settings</button>
+    </nav>
+    <div class="hdr-right">
+      <span id="sync-txt" style="font-family:var(--font-mono);font-size:10px;color:#a8bcd8"></span>
+      <button class="btn-sm" onclick="syncNow()">Sync</button>
+      <button class="btn-sm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+  <main>
+    <div id="view-dashboard" class="view active">
+      <div class="view-header">
+        <div class="view-title">Dashboard</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm gold" onclick="openModal('add-device')">+ Add Device</button>
+          <button class="btn-sm gold" onclick="openModal('add-staff')">+ Add Staff</button>
+        </div>
+      </div>
+      <div id="sync-banner" class="sync-bar" style="display:none">
+        <div class="sdot syncing" id="sdot"></div>
+        <span id="sync-msg">Connecting...</span>
+      </div>
+      <div class="stats-row" id="dash-stats"></div>
+      <div id="dash-alerts"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:10px">Warranty expiring within 90 days</div>
+          <div class="table-wrap" id="dash-w"></div>
+        </div>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:10px">Devices due for refresh (3yr+)</div>
+          <div class="table-wrap" id="dash-r"></div>
+        </div>
+      </div>
+    </div>
+    <div id="view-staff" class="view">
+      <div class="view-header">
+        <div class="view-title">Staff</div>
+        <button class="btn-sm gold" onclick="openModal('add-staff')">+ Add Staff</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="staff-q" placeholder="Search name, email..." oninput="renderStaff()">
+        <select id="staff-fs" onchange="renderStaff()"><option value="">All statuses</option><option>Active</option><option>Inactive</option></select>
+        <select id="staff-ft" onchange="renderStaff()"><option value="">All teams</option></select>
+        <select id="staff-fd" onchange="renderStaff()"><option value="">All departments</option></select>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr id="staff-thead"></tr></thead>
+        <tbody id="staff-tbody"></tbody>
+      </table></div>
+    </div>
+    <div id="view-devices" class="view">
+      <div class="view-header">
+        <div class="view-title">Devices</div>
+        <button class="btn-sm gold" onclick="openModal('add-device')">+ Add Device</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="dev-q" placeholder="Search IP, MAC, service tag, name..." oninput="renderDevices()">
+        <select id="dev-ft" onchange="renderDevices()"><option value="">All types</option></select>
+        <select id="dev-ft2" onchange="renderDevices()"><option value="">All teams</option></select>
+        <select id="dev-fd" onchange="renderDevices()"><option value="">All departments</option></select>
+        <select id="dev-fb" onchange="renderDevices()"><option value="">All buildings</option></select>
+        <select id="dev-fs" onchange="renderDevices()"><option value="">All statuses</option><option>Active</option><option>Active (Loaner)</option><option>Inactive</option><option>Loaner</option><option>Surplus</option><option>Repair</option></select>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr id="dev-thead"></tr></thead>
+        <tbody id="dev-tbody"></tbody>
+      </table></div>
+    </div>
+    <div id="view-reports" class="view">
+      <div class="view-title" style="margin-bottom:20px">Reports</div>
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('dept',this)">By Department</button>
+        <button class="tab" onclick="showTab('bldg',this)">By Building</button>
+        <button class="tab" onclick="showTab('shist',this)">Staff History</button>
+        <button class="tab" onclick="showTab('warr',this)">Warranty / Refresh</button>
+        <button class="tab" onclick="showTab('surp',this)">Surplus</button>
+        <button class="tab" onclick="showTab('adobe',this)">Adobe Licenses</button>
+      </div>
+      <div id="tab-dept"></div>
+      <div id="tab-bldg" style="display:none"></div>
+      <div id="tab-shist" style="display:none">
+        <div style="margin-bottom:16px">
+          <select id="hist-sel" class="fi" style="max-width:300px" onchange="renderStaffHist()"><option value="">Select staff member...</option></select>
+        </div>
+        <div id="hist-results"></div>
+      </div>
+      <div id="tab-warr" style="display:none"></div>
+      <div id="tab-surp" style="display:none"></div>
+      <div id="tab-adobe" style="display:none"></div>
+    </div>
+    <div id="view-settings" class="view">
+      <div class="view-title" style="margin-bottom:20px">Settings</div>
+      <div class="ss"><div class="ss-hdr">Change Password</div><div class="ss-body" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <div class="fgrp"><label class="fl">New Password</label><input type="password" id="new-pw" class="fi" style="width:220px"></div>
+        <div class="fgrp"><label class="fl">Confirm</label><input type="password" id="confirm-pw" class="fi" style="width:220px"></div>
+        <button class="btn-sm plain" onclick="changePw()">Update</button>
+        <span id="pw-msg" style="font-size:11px;font-family:var(--font-mono);display:none"></span>
+      </div></div>
+      <div class="ss"><div class="ss-hdr">Teams / Areas</div><div class="ss-body">
+        <div class="stag-list" id="team-list"></div>
+        <div class="add-row"><input type="text" class="fi" id="new-team" placeholder="New team" style="width:200px"><button class="btn-sm plain" onclick="addItem('team')">Add</button></div>
+      </div></div>
+      <div class="ss"><div class="ss-hdr">Departments</div><div class="ss-body">
+        <div class="stag-list" id="dept-list"></div>
+        <div class="add-row"><input type="text" class="fi" id="new-dept" placeholder="New department" style="width:200px"><button class="btn-sm plain" onclick="addItem('dept')">Add</button></div>
+      </div></div>
+      <div class="ss"><div class="ss-hdr">Device Types</div><div class="ss-body">
+        <div class="stag-list" id="dtype-list"></div>
+        <div class="add-row"><input type="text" class="fi" id="new-dtype" placeholder="New device type" style="width:200px"><button class="btn-sm plain" onclick="addItem('dtype')">Add</button></div>
+      </div></div>
+      <div class="ss"><div class="ss-hdr">Device Statuses</div><div class="ss-body">
+        <div class="stag-list" id="dstatus-list"></div>
+        <div class="add-row"><input type="text" class="fi" id="new-dstatus" placeholder="New status" style="width:200px"><button class="btn-sm plain" onclick="addItem('dstatus')">Add</button></div>
+      </div></div>
+      <div class="ss"><div class="ss-hdr">Buildings</div><div class="ss-body">
+        <div class="stag-list" id="bldg-list"></div>
+        <div class="add-row"><input type="text" class="fi" id="new-bldg" placeholder="New building" style="width:200px"><button class="btn-sm plain" onclick="addItem('bldg')">Add</button></div>
+      </div></div>
+      <div class="ss"><div class="ss-hdr">Warranty Alert Threshold</div><div class="ss-body" style="display:flex;align-items:center;gap:12px">
+        <label class="fl">Alert when expiring within</label>
+        <input type="number" class="fi" id="warr-days" style="width:80px" min="1">
+        <span style="font-family:var(--font-mono);font-size:12px;color:var(--text2)">days</span>
+        <button class="btn-sm plain" onclick="saveWarrDays()">Save</button>
+        <span id="warr-msg" style="font-size:11px;font-family:var(--font-mono);color:var(--green);display:none">Saved.</span>
+      </div></div>
+      <div class="ss"><div class="ss-hdr">Google Sheets Sync</div><div class="ss-body" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn-sm plain" onclick="syncNow()">Sync Now</button>
+        <button class="btn-sm plain" onclick="pushToSheets()">Push to Sheets</button>
+        <button class="btn-sm plain" onclick="pullFromSheets()">Pull from Sheets</button>
+        <span id="sheets-msg" style="font-size:11px;font-family:var(--font-mono);color:var(--text3)"></span>
+      </div></div>
+      <div class="ss"><div class="ss-hdr">Data Management</div><div class="ss-body" style="display:flex;gap:8px">
+        <button class="btn-sm plain" onclick="exportData()">Export JSON Backup</button>
+        <label class="btn-sm plain" style="cursor:pointer">Import Backup<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+        <button class="btn-sm plain" style="color:var(--red)" onclick="clearAll()">Clear All Data</button>
+      </div></div>
+    </div>
+  </main>
+</div>
+
+<!-- STAFF MODAL -->
+<div id="modal-add-staff" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="staff-mtitle">Add Staff Member</div><button class="modal-close" onclick="closeModal('add-staff')">&times;</button></div>
+    <div class="modal-body"><div class="fg">
+      <div class="fgrp"><label class="fl">First Name *</label><input class="fi" id="sf-first" placeholder="First name"></div>
+      <div class="fgrp"><label class="fl">Last Name *</label><input class="fi" id="sf-last" placeholder="Last name"></div>
+      <div class="fgrp"><label class="fl">Email</label><input class="fi" id="sf-email" placeholder="email@ncsu.edu"></div>
+      <div class="fgrp"><label class="fl">Phone</label><input class="fi" id="sf-phone" placeholder="919-xxx-xxxx"></div>
+      <div class="fgrp"><label class="fl">Team</label><select class="fi" id="sf-team" onchange="autoFillDept(this.value,&quot;sf-dept&quot;)"></select></div>
+      <div class="fgrp"><label class="fl">Department</label><select class="fi" id="sf-dept"></select></div>
+      <div class="fgrp"><label class="fl">Status</label><select class="fi" id="sf-status"><option>Active</option><option>Inactive</option></select></div>
+      <div class="fgrp"><label class="fl">Adobe License</label><select class="fi" id="sf-adobe"><option value="No">No</option><option value="Yes">Yes</option></select></div>
+      <div class="fgrp"><label class="fl">Remote Access</label><select class="fi" id="sf-remote"><option value="No">No</option><option value="Yes">Yes</option></select></div>
+      <div class="fgrp fgf"><label class="fl">Notes</label><textarea class="fi" id="sf-notes" placeholder="Any notes..."></textarea></div>
+    </div></div>
+    <div class="modal-footer">
+      <button class="btn-sm plain" onclick="closeModal('add-staff')">Cancel</button>
+      <button class="btn-sm gold" onclick="saveStaff()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEVICE MODAL -->
+<div id="modal-add-device" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="dev-mtitle">Add Device</div><button class="modal-close" onclick="closeModal('add-device')">&times;</button></div>
+    <div class="modal-body"><div class="fg">
+      <div class="fg-sec">Device Identity</div>
+      <div class="fgrp"><label class="fl">Device Name *</label><input class="fi" id="df-name" placeholder="e.g. MATSUP-A1B2C3"></div>
+      <div class="fgrp"><label class="fl">Device Type</label><select class="fi" id="df-type"></select></div>
+      <div class="fgrp"><label class="fl">Model</label><input class="fi" id="df-model" placeholder="e.g. Dell Latitude 5540"></div>
+      <div class="fgrp"><label class="fl">Service Tag</label><input class="fi" id="df-stag" placeholder="Service tag"></div>
+      <div class="fgrp"><label class="fl">IP Address</label><input class="fi" id="df-ip" placeholder="192.168.x.x"></div>
+      <div class="fgrp"><label class="fl">MAC Address</label><input class="fi" id="df-mac" placeholder="AA:BB:CC:DD:EE:FF"></div>
+      <div class="fgrp"><label class="fl">VLAN</label><input class="fi" id="df-vlan" placeholder="VLAN ID"></div>
+      <div class="fgrp"><label class="fl">Service Code</label><input class="fi" id="df-scode" placeholder="Optional"></div>
+      <div class="fg-sec">Location and Assignment</div>
+      <div class="fgrp"><label class="fl">Building</label><select class="fi" id="df-building"></select></div>
+      <div class="fgrp"><label class="fl">Room</label><input class="fi" id="df-room" placeholder="Room number/name"></div>
+      <div class="fgrp"><label class="fl">Team</label><select class="fi" id="df-team" onchange="autoFillDept(this.value,&quot;df-dept&quot;)"></select></div>
+      <div class="fgrp"><label class="fl">Department</label><select class="fi" id="df-dept"></select></div>
+      <div class="fgrp"><label class="fl">Status</label><select class="fi" id="df-status"></select></div>
+      <div class="fgrp"><label class="fl">Assigned To</label><select class="fi" id="df-assigned"></select></div>
+      <div class="fgrp"><label class="fl">SLA Included</label><select class="fi" id="df-sla"><option value="No">No</option><option value="Yes">Yes</option></select></div>
+      <div class="fg-sec">Dates and Warranty</div>
+      <div class="fgrp"><label class="fl">Acquired Date</label><input type="date" class="fi" id="df-acquired"></div>
+      <div class="fgrp"><label class="fl">Warranty Expiration</label><input type="date" class="fi" id="df-warranty"></div>
+      <div class="fg-sec">Surplus</div>
+      <div class="fgrp"><label class="fl">Surplus Date</label><input type="date" class="fi" id="df-surpdate"></div>
+      <div class="fgrp"><label class="fl">Surplus ID</label><input class="fi" id="df-surpid" placeholder="Surplus ID number"></div>
+      <div class="fg-sec">Notes</div>
+      <div class="fgrp fgf"><label class="fl">Notes</label><textarea class="fi" id="df-notes" placeholder="Any notes..."></textarea></div>
+    </div></div>
+    <div class="modal-footer">
+      <button class="btn-sm plain" onclick="closeModal('add-device')">Cancel</button>
+      <button class="btn-sm gold" onclick="saveDevice()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW DEVICE MODAL -->
+<div id="modal-view-device" class="modal-overlay">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header"><div class="modal-title" id="vd-title">Device Details</div><button class="modal-close" onclick="closeModal('view-device')">&times;</button></div>
+    <div class="modal-body" id="vd-body"></div>
+    <div class="modal-footer"><button class="btn-sm plain" onclick="closeModal('view-device')">Close</button><button class="btn-sm gold" id="vd-edit">Edit</button></div>
+  </div>
+</div>
+
+<!-- VIEW STAFF MODAL -->
+<div id="modal-view-staff" class="modal-overlay">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header"><div class="modal-title" id="vs-title">Staff Details</div><button class="modal-close" onclick="closeModal('view-staff')">&times;</button></div>
+    <div class="modal-body" id="vs-body"></div>
+    <div class="modal-footer"><button class="btn-sm plain" onclick="closeModal('view-staff')">Close</button><button class="btn-sm gold" id="vs-edit">Edit</button></div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwrxfG7kz1HkoEu9ZX0f9xVgK8cNiwCdFNLfrKuuyC9odSif9S-2W6A9RYmisd2TWFq/exec';
+const LS_KEY='pbs_itasset_v2';
+
+var DB={
+  password:'admin123',
+  warrantyDays:90,
+  teams:['Systems','WolfCopy','Materials Support','Procurement','Contracts','SIM','MarketPlace','Conference Room','Card Services','Finance Division'],
+  departments:['Materials Support','Procurement','WolfCopy'],
+  deviceTypes:['Laptop','Desktop','Monitor','Docking Station','Printer','Tablet','Phone','Accessory'],
+  deviceStatuses:['Active','Active (Loaner)','Inactive','Loaner','Surplus','Repair','Storage'],
+  buildings:['Admin Bldg','Materials Support Warehouse'],
+  staff:[],
+  devices:[]
+};
+
+var editStaffId=null, editDeviceId=null;
+var staffSort={col:null,dir:1};
+var devSort={col:null,dir:1};
+var adobeSort={col:'lastName',dir:1};
+
+function loadLocal(){
+  try{var s=localStorage.getItem(LS_KEY);if(s){DB=JSON.parse(s);}}catch(e){}
+}
+function saveLocal(){
+  try{localStorage.setItem(LS_KEY,JSON.stringify(DB));}catch(e){}
+}
+function gid(id){return document.getElementById(id);}
+
+function fmtDate(ds){
+  if(!ds)return '—';
+  var d=new Date(ds);
+  if(isNaN(d.getTime()))return ds;
+  return(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getDate().toString().padStart(2,'0')+'/'+(d.getFullYear());
+}
+
+function autoFillDept(teamVal, deptFieldId){
+  var dept='';
+  if(teamVal==='WolfCopy') dept='WolfCopy';
+  else if(teamVal==='Materials Support') dept='Materials Support';
+  else if(teamVal!=='') dept='Procurement';
+  var el=gid(deptFieldId);
+  if(el&&dept) el.value=dept;
+}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+
+function toCSV(headers,rows){
+  var lines=[headers.map(function(h){return'"'+h+'"';}).join(',')];
+  rows.forEach(function(row){
+    lines.push(row.map(function(cell){
+      var v=cell===null||cell===undefined?'':String(cell).replace(/"/g,'""');
+      return'"'+v+'"';
+    }).join(','));
+  });
+  return lines.join('\r\n');
+}
+function downloadCSV(filename,headers,rows){
+  var csv=toCSV(headers,rows);
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename+'-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+function exportBtn(fn){
+  return '<button class="btn-sm plain" style="margin-bottom:12px" onclick="'+fn+'">&#8595; Export CSV</button>';
+}
+function exportDept(){
+  var headers=['Department','Total Devices','Active','Laptops','Desktops','Other'];
+  var rows=DB.departments.map(function(dept){
+    var devs=DB.devices.filter(function(d){return d.dept===dept;});
+    var laptops=devs.filter(function(d){return d.type==='Laptop';}).length;
+    var desktops=devs.filter(function(d){return d.type==='Desktop';}).length;
+    return[dept,devs.length,devs.filter(function(d){return d.status==='Active';}).length,laptops,desktops,devs.length-laptops-desktops];
+  }).filter(function(r){return r[1]>0;});
+  downloadCSV('report-by-department',headers,rows);
+}
+function exportBldg(){
+  var allTypes=[].concat.apply([],DB.devices.map(function(d){return[d.type];})).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var headers=['Building','Total'].concat(allTypes);
+  var rows=DB.buildings.map(function(b){
+    var devs=DB.devices.filter(function(d){return d.building===b;});
+    var types={};devs.forEach(function(d){types[d.type]=(types[d.type]||0)+1;});
+    return[b,devs.length].concat(allTypes.map(function(t){return types[t]||0;}));
+  });
+  downloadCSV('report-by-building',headers,rows);
+}
+function exportStaffHist(){
+  var id=gid('hist-sel')&&gid('hist-sel').value;
+  if(!id){alert('Please select a staff member first.');return;}
+  var s=DB.staff.find(function(x){return x.id===id;});if(!s)return;
+  var devs=DB.devices.filter(function(d){
+    return d.assignedTo===id||(d.history||[]).some(function(h){return h.event&&h.event.indexOf(s.lastName+', '+s.firstName)>=0;});
+  });
+  var headers=['Device Name','Type','Model','Status','Acquired','Surplus Date'];
+  var rows=devs.map(function(d){return[d.name,d.type,d.model||'',d.status,d.acquired||'',d.surplusDate||''];});
+  downloadCSV('staff-history-'+s.lastName+'-'+s.firstName,headers,rows);
+}
+function exportWarr(){
+  var thr=DB.warrantyDays||90;
+  var fi='warr-f',ti='warr-t';
+  var expiring=DB.devices.filter(function(d){var n=wDays(d.warranty);return n!==null&&n>=0&&n<=thr&&inDR(d.warranty,fi,ti);});
+  var expired=DB.devices.filter(function(d){var n=wDays(d.warranty);return n!==null&&n<0&&inDR(d.warranty,fi,ti);});
+  var refresh=DB.devices.filter(function(d){var a=ageDays(d.acquired);return a!==null&&a>=(365*3)&&d.status!=='Surplus'&&inDR(d.acquired,fi,ti);});
+  var headers=['Section','Device Name','Type','Model','Dept','Building','Warranty Exp','Days Left','Acquired','Age (yrs)'];
+  var rows=[];
+  expired.forEach(function(d){var a=ageDays(d.acquired);rows.push(['Expired',d.name,d.type,d.model||'',d.dept||'',d.building||'',d.warranty||'','Expired',d.acquired||'',a!==null?(a/365).toFixed(1):'']);});
+  expiring.forEach(function(d){var n=wDays(d.warranty);var a=ageDays(d.acquired);rows.push(['Expiring Soon',d.name,d.type,d.model||'',d.dept||'',d.building||'',d.warranty||'',n+'d',d.acquired||'',a!==null?(a/365).toFixed(1):'']);});
+  refresh.forEach(function(d){var a=ageDays(d.acquired);rows.push(['Due Refresh',d.name,d.type,d.model||'',d.dept||'',d.building||'',d.warranty||'','',d.acquired||'',a!==null?(a/365).toFixed(1):'']);});
+  downloadCSV('report-warranty-refresh',headers,rows);
+}
+function exportSurp(){
+  var fi='surp-f',ti='surp-t';
+  var surplused=DB.devices.filter(function(d){return(d.status==='Surplus'||d.surplusDate)&&inDR(d.surplusDate,fi,ti);});
+  var headers=['Device Name','Type','Model','Dept','Building','Last Assigned','Surplus Date','Surplus ID','Acquired'];
+  var rows=surplused.map(function(d){
+    var asgn=d.assignedTo?DB.staff.find(function(s){return s.id===d.assignedTo;}):null;
+    return[d.name,d.type,d.model||'',d.dept||'',d.building||'',asgn?asgn.lastName+', '+asgn.firstName:'',d.surplusDate||'',d.surplusId||'',d.acquired||''];
+  });
+  downloadCSV('report-surplus',headers,rows);
+}
+function sortArr(arr,col,dir){
+  return arr.slice().sort(function(a,b){
+    var av=a[col]||'',bv=b[col]||'';
+    if(typeof av==='string')av=av.toLowerCase();
+    if(typeof bv==='string')bv=bv.toLowerCase();
+    if(av<bv)return -1*dir;
+    if(av>bv)return 1*dir;
+    return 0;
+  });
+}
+function thSort(label,col,sortObj,renderFn){
+  var icon=sortObj.col===col?(sortObj.dir===1?' ▲':' ▼'):'';
+  return '<th style="cursor:pointer;user-select:none" onclick="'+renderFn+'Sort("'+col+'")">' +label+icon+'</th>';
+}
+
+function setSyncUI(state,msg){
+  var banner=gid('sync-banner'),dot=gid('sdot'),msgEl=gid('sync-msg'),txt=gid('sync-txt');
+  if(!banner)return;
+  banner.style.display='flex';
+  dot.className='sdot'+(state==='syncing'?' syncing':state==='err'?' err':'');
+  msgEl.textContent=msg;
+  if(state==='ok'){
+    if(txt)txt.textContent='Synced '+new Date().toLocaleTimeString();
+    setTimeout(function(){banner.style.display='none';},3000);
+  }else if(state==='err'){
+    if(txt)txt.textContent='Sync error';
+  }else{
+    if(txt)txt.textContent='Syncing...';
+  }
+}
+
+async function pullFromSheets(){
+  setSyncUI('syncing','Loading from Google Sheets...');
+  try{
+    var res=await fetch(SCRIPT_URL+'?action=getAll');
+    var data=await res.json();
+    if(data.error)throw new Error(data.error);
+    if(data.staff&&data.staff.length>0){
+      DB.staff=data.staff.map(function(r){
+        return Object.assign({},r,{history:typeof r.history==='string'&&r.history?JSON.parse(r.history):(r.history||[])});
+      });
+    }
+    if(data.devices&&data.devices.length>0){
+      DB.devices=data.devices.map(function(r){
+        return Object.assign({},r,{history:typeof r.history==='string'&&r.history?JSON.parse(r.history):(r.history||[])});
+      });
+    }
+    if(data.config&&data.config.length>0){
+      var cfg={};
+      data.config.forEach(function(r){cfg[r.key]=r.value;});
+      if(cfg.password)DB.password=cfg.password;
+      if(cfg.warrantyDays)DB.warrantyDays=parseInt(cfg.warrantyDays)||90;
+      try{var t=JSON.parse(cfg.teams);if(t&&t.length>0)DB.teams=t;}catch(e){}
+      try{var dp=JSON.parse(cfg.departments);if(dp&&dp.length>0)DB.departments=dp;}catch(e){}
+      try{var dt=JSON.parse(cfg.deviceTypes);if(dt&&dt.length>0)DB.deviceTypes=dt;}catch(e){}
+      try{var ds=JSON.parse(cfg.deviceStatuses);if(ds&&ds.length>0)DB.deviceStatuses=ds;}catch(e){}
+      try{var bl=JSON.parse(cfg.buildings);if(bl&&bl.length>0)DB.buildings=bl;}catch(e){}
+    }
+    // Safety net — if any critical list is missing, restore defaults
+    if(!DB.teams||DB.teams.length===0)DB.teams=['Systems','WolfCopy','Materials Support','Procurement','Contracts','SIM','MarketPlace','Conference Room','Card Services','Finance Division'];
+    if(!DB.departments||DB.departments.length===0)DB.departments=['Materials Support','Procurement','WolfCopy'];
+    if(!DB.deviceTypes||DB.deviceTypes.length===0)DB.deviceTypes=['Laptop','Desktop','Monitor','Docking Station','Printer','Tablet','Phone','Accessory'];
+    if(!DB.deviceStatuses||DB.deviceStatuses.length===0)DB.deviceStatuses=['Active','Active (Loaner)','Inactive','Loaner','Surplus','Repair','Storage'];
+    if(!DB.buildings||DB.buildings.length===0)DB.buildings=['Admin Bldg','Materials Support Warehouse'];
+    saveLocal();
+    setSyncUI('ok','Loaded from Google Sheets');
+    refreshAll();
+    var sm=gid('sheets-msg');if(sm)sm.textContent='Pulled: '+new Date().toLocaleTimeString();
+  }catch(e){
+    setSyncUI('err','Could not reach Google Sheets — working offline');
+  }
+}
+
+async function pushToSheets(){
+  setSyncUI('syncing','Saving to Google Sheets...');
+  var cfgRows=[
+    {key:'password',value:DB.password},
+    {key:'warrantyDays',value:String(DB.warrantyDays)},
+    {key:'teams',value:JSON.stringify(DB.teams)},
+    {key:'departments',value:JSON.stringify(DB.departments)},
+    {key:'deviceTypes',value:JSON.stringify(DB.deviceTypes)},
+    {key:'deviceStatuses',value:JSON.stringify(DB.deviceStatuses)},
+    {key:'buildings',value:JSON.stringify(DB.buildings)}
+  ];
+  var payload={action:'saveAll',data:{
+    config:cfgRows,
+    staff:DB.staff,
+    devices:DB.devices.map(function(d){return Object.assign({},d,{history:JSON.stringify(d.history||[])});})
+  }};
+  try{
+    var res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+    var result=await res.json();
+    if(!result.success)throw new Error('Save failed');
+    setSyncUI('ok','Saved to Google Sheets');
+    var sm=gid('sheets-msg');if(sm)sm.textContent='Pushed: '+new Date().toLocaleTimeString();
+  }catch(e){
+    setSyncUI('err','Could not save to Google Sheets');
+  }
+}
+
+function syncNow(){pullFromSheets();}
+function saveAndPush(){saveLocal();pushToSheets();}
+
+document.addEventListener('DOMContentLoaded',function(){
+  gid('login-btn').addEventListener('click',doLogin);
+  gid('pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  // Auto-login if session is still active
+  if(sessionStorage.getItem('pbs_loggedin')==='yes'){
+    loadLocal();
+    gid('login-screen').style.display='none';
+    var app=gid('app');app.style.display='flex';
+    init();
+  }
+});
+
+function doLogin(){
+  loadLocal();
+  var pw=gid('pw-input').value.trim();
+  var stored=DB.password||'admin123';
+  if(pw===stored||pw==='admin123'){
+    sessionStorage.setItem('pbs_loggedin','yes');
+    gid('login-screen').style.display='none';
+    gid('login-err').style.display='none';
+    var app=gid('app');app.style.display='flex';
+    init();
+  }else{
+    gid('login-err').style.display='block';
+  }
+}
+
+function doLogout(){
+  sessionStorage.removeItem('pbs_loggedin');
+  gid('app').style.display='none';
+  gid('login-screen').style.display='flex';
+  gid('pw-input').value='';
+  gid('login-err').style.display='none';
+}
+
+function init(){
+  renderSettings();populateFilters();renderDashboard();renderStaff();renderDevices();renderTabDept();
+  setTimeout(pullFromSheets,500);
+}
+
+function refreshAll(){
+  renderDashboard();renderStaff();renderDevices();renderSettings();populateFilters();
+}
+
+function showView(v){
+  document.querySelectorAll('.view').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('nav button').forEach(function(el){el.classList.remove('active');});
+  gid('view-'+v).classList.add('active');
+  var nb=gid('nav-'+v);if(nb)nb.classList.add('active');
+  if(v==='reports')renderTabDept();
+  if(v==='settings')renderSettings();
+}
+
+function openModal(type){
+  if(type==='add-staff'){editStaffId=null;gid('staff-mtitle').textContent='Add Staff Member';clearStaffForm();populateStaffSelects();}
+  if(type==='add-device'){editDeviceId=null;gid('dev-mtitle').textContent='Add Device';clearDeviceForm();populateDeviceSelects();}
+  gid('modal-'+type).classList.add('open');
+}
+function closeModal(type){gid('modal-'+type).classList.remove('open');}
+
+function clearStaffForm(){
+  ['sf-first','sf-last','sf-email','sf-phone','sf-notes'].forEach(function(id){var el=gid(id);if(el)el.value='';});
+  var st=gid('sf-status');if(st)st.value='Active';
+  var ad=gid('sf-adobe');if(ad)ad.value='No';
+  var rm=gid('sf-remote');if(rm)rm.value='No';
+}
+function clearDeviceForm(){
+  ['df-name','df-model','df-stag','df-ip','df-mac','df-vlan','df-scode','df-room','df-acquired','df-warranty','df-surpdate','df-surpid','df-notes'].forEach(function(id){var el=gid(id);if(el)el.value='';});
+}
+function populateStaffSelects(){
+  var t=gid('sf-team');
+  if(t){
+    t.innerHTML='';
+    var opt0=document.createElement('option');opt0.value='';opt0.textContent='-- Select --';t.appendChild(opt0);
+    DB.teams.forEach(function(x){var o=document.createElement('option');o.value=x;o.textContent=x;t.appendChild(o);});
+  }
+  var d=gid('sf-dept');
+  if(d){
+    d.innerHTML='';
+    var opt1=document.createElement('option');opt1.value='';opt1.textContent='-- Select --';d.appendChild(opt1);
+    DB.departments.forEach(function(x){var o=document.createElement('option');o.value=x;o.textContent=x;d.appendChild(o);});
+  }
+}
+function populateDeviceSelects(){
+  var t=gid('df-type');if(t)t.innerHTML=DB.deviceTypes.map(function(x){return '<option>'+x+'</option>';}).join('');
+  var d=gid('df-dept');if(d)d.innerHTML='<option value="">-- Select --</option>'+DB.departments.map(function(x){return '<option>'+x+'</option>';}).join('');
+  var b=gid('df-building');if(b)b.innerHTML='<option value="">-- Select --</option>'+DB.buildings.map(function(x){return '<option>'+x+'</option>';}).join('');
+  var st=gid('df-status');if(st)st.innerHTML=DB.deviceStatuses.map(function(x){return '<option>'+x+'</option>';}).join('');
+  var a=gid('df-assigned');if(a)a.innerHTML='<option value="">Unassigned / Loaner Pool</option>'+DB.staff.map(function(s){return '<option value="'+s.id+'">'+s.lastName+', '+s.firstName+'</option>';}).join('');
+}
+
+function saveStaff(){
+  var first=gid('sf-first').value.trim(),last=gid('sf-last').value.trim();
+  if(!first||!last){alert('First and last name required.');return;}
+  var obj={id:editStaffId||genId(),firstName:first,lastName:last,
+    email:gid('sf-email').value.trim(),phone:gid('sf-phone').value.trim(),
+    team:gid('sf-team').value,dept:gid('sf-dept').value,status:gid('sf-status').value,
+    adobe:gid('sf-adobe').value,remote:gid('sf-remote').value,
+    notes:gid('sf-notes').value.trim()};
+  if(editStaffId){var i=DB.staff.findIndex(function(s){return s.id===editStaffId;});if(i>=0)DB.staff[i]=obj;}
+  else DB.staff.push(obj);
+  closeModal('add-staff');saveAndPush();renderStaff();renderDashboard();populateFilters();
+}
+
+function saveDevice(){
+  var name=gid('df-name').value.trim();
+  if(!name){alert('Device name required.');return;}
+  var aId=gid('df-assigned').value;
+  var obj={id:editDeviceId||genId(),name:name,type:gid('df-type').value,
+    model:gid('df-model').value.trim(),serviceTag:gid('df-stag').value.trim(),
+    ip:gid('df-ip').value.trim(),mac:gid('df-mac').value.trim(),
+    vlan:gid('df-vlan').value.trim(),serviceCode:gid('df-scode').value.trim(),
+    building:gid('df-building').value,room:gid('df-room').value.trim(),
+    team:gid('df-team').value,dept:gid('df-dept').value,status:gid('df-status').value,
+    assignedTo:aId,sla:gid('df-sla').value,
+    acquired:gid('df-acquired').value,warranty:gid('df-warranty').value,
+    surplusDate:gid('df-surpdate').value,surplusId:gid('df-surpid').value.trim(),
+    notes:gid('df-notes').value.trim(),history:[]};
+  if(editDeviceId){
+    var i=DB.devices.findIndex(function(d){return d.id===editDeviceId;});
+    if(i>=0){
+      var prev=DB.devices[i];obj.history=prev.history||[];
+      if(prev.assignedTo!==obj.assignedTo){
+        var pv=prev.assignedTo?DB.staff.find(function(s){return s.id===prev.assignedTo;}):null;
+        var nv=obj.assignedTo?DB.staff.find(function(s){return s.id===obj.assignedTo;}):null;
+        obj.history=obj.history.concat([{date:new Date().toISOString().slice(0,10),event:'Reassigned from '+(pv?pv.lastName+', '+pv.firstName:'Unassigned')+' to '+(nv?nv.lastName+', '+nv.firstName:'Unassigned')}]);
+      }
+      DB.devices[i]=obj;
+    }
+  }else{
+    if(aId){var s=DB.staff.find(function(x){return x.id===aId;});if(s)obj.history.push({date:new Date().toISOString().slice(0,10),event:'Assigned to '+s.lastName+', '+s.firstName});}
+    DB.devices.push(obj);
+  }
+  closeModal('add-device');saveAndPush();renderDevices();renderDashboard();
+}
+
+function editStaffFn(id){
+  var s=DB.staff.find(function(x){return x.id===id;});if(!s)return;
+  editStaffId=id;gid('staff-mtitle').textContent='Edit Staff Member';
+  populateStaffSelects();
+  gid('sf-first').value=s.firstName;gid('sf-last').value=s.lastName;
+  gid('sf-email').value=s.email||'';gid('sf-phone').value=s.phone||'';
+  gid('sf-team').value=s.team||'';gid('sf-dept').value=s.dept||'';gid('sf-status').value=s.status||'Active';
+  gid('sf-adobe').value=s.adobe||'No';gid('sf-remote').value=s.remote||'No';
+  gid('sf-notes').value=s.notes||'';
+  closeModal('view-staff');gid('modal-add-staff').classList.add('open');
+}
+function editDeviceFn(id){
+  var d=DB.devices.find(function(x){return x.id===id;});if(!d)return;
+  editDeviceId=id;gid('dev-mtitle').textContent='Edit Device';
+  populateDeviceSelects();
+  gid('df-name').value=d.name||'';gid('df-type').value=d.type||'';
+  gid('df-model').value=d.model||'';gid('df-stag').value=d.serviceTag||'';
+  gid('df-ip').value=d.ip||'';gid('df-mac').value=d.mac||'';
+  gid('df-vlan').value=d.vlan||'';gid('df-scode').value=d.serviceCode||'';
+  gid('df-building').value=d.building||'';gid('df-room').value=d.room||'';
+  gid('df-team').value=d.team||'';gid('df-dept').value=d.dept||'';gid('df-status').value=d.status||'';
+  gid('df-assigned').value=d.assignedTo||'';gid('df-sla').value=d.sla||'No';
+  gid('df-acquired').value=d.acquired||'';gid('df-warranty').value=d.warranty||'';
+  gid('df-surpdate').value=d.surplusDate||'';gid('df-surpid').value=d.surplusId||'';
+  gid('df-notes').value=d.notes||'';
+  closeModal('view-device');gid('modal-add-device').classList.add('open');
+}
+function delStaff(id){if(!confirm('Delete this staff member?'))return;DB.staff=DB.staff.filter(function(s){return s.id!==id;});saveAndPush();renderStaff();renderDashboard();}
+function delDevice(id){if(!confirm('Delete this device?'))return;DB.devices=DB.devices.filter(function(d){return d.id!==id;});saveAndPush();renderDevices();renderDashboard();}
+
+function badge(cls,txt){return '<span class="badge '+cls+'">'+txt+'</span>';}
+function statusBadge(s){var m={Active:'bg',Inactive:'br','Active (Loaner)':'bl',Loaner:'bb',Surplus:'bx',Repair:'ba',Storage:'bx'};return badge(m[s]||'bx',s||'—');}
+function wDays(ds){if(!ds)return null;var d=new Date(ds);if(isNaN(d.getTime()))return null;return Math.floor((d-new Date())/86400000);}
+function ageDays(ds){if(!ds)return null;var d=new Date(ds);if(isNaN(d.getTime()))return null;return Math.floor((new Date()-d)/86400000);}
+function fld(lbl,val){return '<div><div style="font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);margin-bottom:3px">'+lbl+'</div><div style="font-size:13px">'+(val||'—')+'</div></div>';}
+
+function viewStaff(id){
+  var s=DB.staff.find(function(x){return x.id===id;});if(!s)return;
+  var devs=DB.devices.filter(function(d){return d.assignedTo===id;});
+  var histDevs=DB.devices.filter(function(d){return(d.history||[]).some(function(h){return h.event&&h.event.indexOf(s.lastName+', '+s.firstName)>=0;});});
+  gid('vs-title').textContent=s.lastName+', '+s.firstName;
+  gid('vs-body').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">'+
+    fld('Team',s.team||'—')+fld('Department',s.dept||'—')+fld('Status',badge(s.status==='Active'?'bg':'br',s.status))+
+    fld('Email',s.email||'—')+fld('Phone',s.phone||'—')+
+    fld('Adobe License',badge(s.adobe==='Yes'?'bg':'bx',s.adobe||'No'))+
+    fld('Remote Access',badge(s.remote==='Yes'?'bb':'bx',s.remote||'No'))+
+    '</div>'+(s.notes?'<div style="background:var(--surface2);padding:10px;font-size:12px;margin-bottom:16px">'+s.notes+'</div>':'')+
+    '<div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:8px">Assigned Devices ('+devs.length+')</div>'+
+    (devs.length?devs.map(function(d){return '<div style="padding:6px 0;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;font-size:12px"><span class="mono">'+d.name+'</span><span style="color:var(--text2)">'+d.type+(d.model?' — '+d.model:'')+'</span></div>';}).join(''):'<div style="color:var(--text3);font-size:12px">None.</div>')+
+    (histDevs.length?'<div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin:16px 0 8px">Device History</div>'+histDevs.map(function(d){return '<div style="padding:6px 0;border-bottom:1px solid var(--border2);font-size:12px"><span class="mono">'+d.name+'</span> — '+d.type+(d.surplusDate?' (Surplused '+d.surplusDate+')':'')+'</div>';}).join(''):'');
+  gid('vs-edit').onclick=function(){editStaffFn(id);};
+  gid('modal-view-staff').classList.add('open');
+}
+
+function viewDevice(id){
+  var d=DB.devices.find(function(x){return x.id===id;});if(!d)return;
+  var asgn=d.assignedTo?DB.staff.find(function(s){return s.id===d.assignedTo;}):null;
+  var wd=wDays(d.warranty),age=ageDays(d.acquired);
+  var wBadge=wd===null?badge('bx','Not set'):wd<0?badge('br','Expired'):wd<90?badge('ba',wd+'d left'):badge('bg',wd+'d left');
+  gid('vd-title').textContent=d.name;
+  gid('vd-body').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">'+
+    fld('Type',d.type)+fld('Model',d.model||'—')+
+    fld('Service Tag',d.serviceTag||'—')+fld('Status',statusBadge(d.status))+
+    fld('Building',d.building||'—')+fld('Room',d.room||'—')+
+    fld('Team',d.team||'—')+fld('Department',d.dept||'—')+fld('SLA',badge(d.sla==='Yes'?'bg':'bx',d.sla||'No'))+
+    fld('IP Address','<span class="mono">'+(d.ip||'—')+'</span>')+fld('MAC Address','<span class="mono">'+(d.mac||'—')+'</span>')+
+    fld('VLAN',d.vlan||'—')+fld('Service Code',d.serviceCode||'—')+
+    fld('Acquired',fmtDate(d.acquired))+fld('Warranty',d.warranty?fmtDate(d.warranty)+' '+wBadge:badge('bx','Not set'))+
+    fld('Assigned To',asgn?asgn.lastName+', '+asgn.firstName:'Unassigned / Loaner Pool')+
+    fld('Age',age!==null?Math.floor(age/365)+'yr '+Math.floor((age%365)/30)+'mo':'—')+
+    (d.surplusDate?fld('Surplus Date',d.surplusDate):'')+
+    (d.surplusId?fld('Surplus ID',d.surplusId):'')+
+    '</div>'+(d.notes?'<div style="background:var(--surface2);padding:10px;font-size:12px;margin-bottom:16px">'+d.notes+'</div>':'')+
+    '<div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Assignment History</div>'+
+    ((d.history||[]).length?(d.history||[]).slice().reverse().map(function(h){return '<div class="hi"><div class="hdot"></div><div><div style="font-size:12px">'+h.event+'</div><div class="hmeta">'+h.date+'</div></div></div>';}).join(''):'<div style="color:var(--text3);font-size:12px">No history.</div>');
+  gid('vd-edit').onclick=function(){editDeviceFn(id);};
+  gid('modal-view-device').classList.add('open');
+}
+
+function renderDashboard(){
+  var total=DB.devices.length,active=DB.devices.filter(function(d){return d.status==='Active';}).length;
+  var loaners=DB.devices.filter(function(d){return d.status==='Loaner';}).length;
+  var surplus=DB.devices.filter(function(d){return d.status==='Surplus';}).length;
+  var thr=DB.warrantyDays||90;
+  var expiring=DB.devices.filter(function(d){var n=wDays(d.warranty);return n!==null&&n>=0&&n<=thr;});
+  var expired=DB.devices.filter(function(d){var n=wDays(d.warranty);return n!==null&&n<0;});
+  var refresh=DB.devices.filter(function(d){var a=ageDays(d.acquired);return a!==null&&a>=(365*3)&&d.status!=='Surplus';});
+  gid('dash-stats').innerHTML=
+    '<div class="stat-card"><div class="stat-label">Total Devices</div><div class="stat-value">'+total+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Active</div><div class="stat-value">'+active+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Loaners</div><div class="stat-value">'+loaners+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Surplused</div><div class="stat-value">'+surplus+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Staff</div><div class="stat-value">'+DB.staff.length+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Expiring Soon</div><div class="stat-value warn">'+expiring.length+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Expired</div><div class="stat-value danger">'+expired.length+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Due Refresh</div><div class="stat-value warn">'+refresh.length+'</div></div>';
+  var alerts='';
+  if(expired.length)alerts+='<div class="alert-banner danger"><strong>'+expired.length+'</strong>&nbsp;device(s) have EXPIRED warranties.</div>';
+  if(expiring.length)alerts+='<div class="alert-banner"><strong>'+expiring.length+'</strong>&nbsp;device(s) expiring within '+thr+' days.</div>';
+  if(refresh.length)alerts+='<div class="alert-banner"><strong>'+refresh.length+'</strong>&nbsp;device(s) are 3+ years old and due for refresh.</div>';
+  gid('dash-alerts').innerHTML=alerts;
+  var soon=DB.devices.filter(function(d){var n=wDays(d.warranty);return n!==null&&n<=90;}).sort(function(a,b){return wDays(a.warranty)-wDays(b.warranty);}).slice(0,8);
+  gid('dash-w').innerHTML=soon.length?'<table><thead><tr><th>Device</th><th>Type</th><th>Expires</th><th>Days</th></tr></thead><tbody>'+soon.map(function(d){var n=wDays(d.warranty);return'<tr><td class="mono">'+d.name+'</td><td>'+d.type+'</td><td class="mono">'+d.warranty+'</td><td>'+badge(n<0?'br':n<30?'br':'ba',n<0?'Expired':n+'d')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">None expiring within 90 days</div>';
+  var r3=refresh.slice(0,8);
+  gid('dash-r').innerHTML=r3.length?'<table><thead><tr><th>Device</th><th>Type</th><th>Acquired</th><th>Age</th></tr></thead><tbody>'+r3.map(function(d){var a=ageDays(d.acquired);return'<tr><td class="mono">'+d.name+'</td><td>'+d.type+'</td><td class="mono">'+d.acquired+'</td><td>'+badge('ba',(a/365).toFixed(1)+'yr')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="empty">None due for refresh</div>';
+}
+
+function populateFilters(){
+  var st=gid('staff-ft');if(st)st.innerHTML='<option value="">All teams</option>'+DB.teams.map(function(d){return'<option>'+d+'</option>';}).join('');
+  var sd=gid('staff-fd');if(sd)sd.innerHTML='<option value="">All departments</option>'+DB.departments.map(function(d){return'<option>'+d+'</option>';}).join('');
+  var dt2=gid('dev-ft2');if(dt2)dt2.innerHTML='<option value="">All teams</option>'+DB.teams.map(function(d){return'<option>'+d+'</option>';}).join('');
+  var dd=gid('dev-fd');if(dd)dd.innerHTML='<option value="">All departments</option>'+DB.departments.map(function(d){return'<option>'+d+'</option>';}).join('');
+  var dt=gid('dev-ft');if(dt)dt.innerHTML='<option value="">All types</option>'+DB.deviceTypes.map(function(d){return'<option>'+d+'</option>';}).join('');
+  var db=gid('dev-fb');if(db)db.innerHTML='<option value="">All buildings</option>'+DB.buildings.map(function(b){return'<option>'+b+'</option>';}).join('');
+}
+
+function renderStaffSort(col){
+  if(staffSort.col===col){staffSort.dir*=-1;}else{staffSort.col=col;staffSort.dir=1;}
+  renderStaff();
+}
+function renderStaff(){
+  var q=(gid('staff-q')&&gid('staff-q').value||'').toLowerCase();
+  var fs=gid('staff-fs')&&gid('staff-fs').value||'';
+  var ft=gid('staff-ft')&&gid('staff-ft').value||'';
+  var fd=gid('staff-fd')&&gid('staff-fd').value||'';
+  var list=DB.staff.filter(function(s){
+    var full=(s.firstName+' '+s.lastName+' '+(s.email||'')).toLowerCase();
+    return(!q||full.indexOf(q)>=0)&&(!fs||s.status===fs)&&(!ft||s.team===ft)&&(!fd||s.dept===fd);
+  });
+  if(staffSort.col){
+    var col=staffSort.col;
+    if(col==='name'){
+      list=list.slice().sort(function(a,b){
+        var av=(a.lastName+a.firstName).toLowerCase(),bv=(b.lastName+b.firstName).toLowerCase();
+        return av<bv?-1*staffSort.dir:av>bv?1*staffSort.dir:0;
+      });
+    } else if(col==='devices'){
+      list=list.slice().sort(function(a,b){
+        var av=DB.devices.filter(function(d){return d.assignedTo===a.id;}).length;
+        var bv=DB.devices.filter(function(d){return d.assignedTo===b.id;}).length;
+        return(av-bv)*staffSort.dir;
+      });
+    } else {
+      list=sortArr(list,col,staffSort.dir);
+    }
+  }
+  var th=gid('staff-thead');
+  if(th){
+    var cols=[['name','name'],['team','team'],['dept','dept'],['status','status'],['adobe','adobe'],['remote','remote'],['devices','devices']];
+    var labels={name:'Name',team:'Team',dept:'Dept',status:'Status',adobe:'Adobe',remote:'Remote',devices:'Devices'};
+    th.innerHTML=cols.map(function(c){
+      var icon=staffSort.col===c[0]?(staffSort.dir===1?' ▲':' ▼'):'';
+      return'<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="renderStaffSort(\''+c[0]+'\')">'+labels[c[0]]+icon+'</th>';
+    }).join('')+'<th>Actions</th>';
+  }
+  var tb=gid('staff-tbody');if(!tb)return;
+  if(!list.length){tb.innerHTML='<tr><td colspan="8"><div class="empty">No staff found</div></td></tr>';return;}
+  tb.innerHTML=list.map(function(s){
+    var devs=DB.devices.filter(function(d){return d.assignedTo===s.id;});
+    return'<tr><td><span style="cursor:pointer;font-weight:500" onclick="viewStaff(\''+s.id+'\')">'+s.lastName+', '+s.firstName+'</span>'+(s.email?'<br><span style="font-size:11px;color:var(--text3)">'+s.email+'</span>':'')+
+      '</td><td>'+(s.dept||'—')+'</td>'+
+      '<td>'+badge(s.status==='Active'?'bg':'br',s.status||'—')+'</td>'+
+      '<td>'+badge(s.adobe==='Yes'?'bg':'bx',s.adobe||'No')+'</td>'+
+      '<td>'+badge(s.remote==='Yes'?'bb':'bx',s.remote||'No')+'</td>'+
+      '<td><span class="mono">'+devs.length+'</span></td>'+
+      '<td><div class="tbl-actions"><button class="tbl-btn" onclick="viewStaff(\''+s.id+'\')">View</button><button class="tbl-btn" onclick="editStaffFn(\''+s.id+'\')">Edit</button><button class="tbl-btn del" onclick="delStaff(\''+s.id+'\')">Del</button></div></td></tr>';
+  }).join('');
+}
+
+function renderDevicesSort(col){
+  if(devSort.col===col){devSort.dir*=-1;}else{devSort.col=col;devSort.dir=1;}
+  renderDevices();
+}
+function renderDevices(){
+  var q=(gid('dev-q')&&gid('dev-q').value||'').toLowerCase();
+  var ft=gid('dev-ft')&&gid('dev-ft').value||'';
+  var ft2=gid('dev-ft2')&&gid('dev-ft2').value||'';
+  var fd=gid('dev-fd')&&gid('dev-fd').value||'';
+  var fb=gid('dev-fb')&&gid('dev-fb').value||'';
+  var fs=gid('dev-fs')&&gid('dev-fs').value||'';
+  var list=DB.devices.filter(function(d){
+    var txt=(d.name+' '+(d.ip||'')+' '+(d.mac||'')+' '+(d.serviceTag||'')+' '+(d.model||'')).toLowerCase();
+    return(!q||txt.indexOf(q)>=0)&&(!ft||d.type===ft)&&(!ft2||d.team===ft2)&&(!fd||d.dept===fd)&&(!fb||d.building===fb)&&(!fs||d.status===fs);
+  });
+  if(devSort.col){
+    var col=devSort.col;
+    if(col==='assignedTo'){
+      list=list.slice().sort(function(a,b){
+        var as=a.assignedTo?DB.staff.find(function(s){return s.id===a.assignedTo;}):null;
+        var bs=b.assignedTo?DB.staff.find(function(s){return s.id===b.assignedTo;}):null;
+        var av=as?as.lastName+as.firstName:'';
+        var bv=bs?bs.lastName+bs.firstName:'';
+        return av.toLowerCase()<bv.toLowerCase()?-1*devSort.dir:av.toLowerCase()>bv.toLowerCase()?1*devSort.dir:0;
+      });
+    } else if(col==='warranty'){
+      list=list.slice().sort(function(a,b){
+        var av=a.warranty||'9999',bv=b.warranty||'9999';
+        return av<bv?-1*devSort.dir:av>bv?1*devSort.dir:0;
+      });
+    } else {
+      list=sortArr(list,col,devSort.dir);
+    }
+  }
+  var th=gid('dev-thead');
+  if(th){
+    var cols=[['name','Device Name'],['type','Type'],['model','Model'],['dept','Dept'],['building','Building'],['assignedTo','Assigned To'],['status','Status'],['warranty','Warranty']];
+    th.innerHTML=cols.map(function(c){
+      var icon=devSort.col===c[0]?(devSort.dir===1?' ▲':' ▼'):'';
+      return'<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="renderDevicesSort(\''+c[0]+'\')">'+c[1]+icon+'</th>';
+    }).join('')+'<th>Actions</th>';
+  }
+  var tb=gid('dev-tbody');if(!tb)return;
+  if(!list.length){tb.innerHTML='<tr><td colspan="9"><div class="empty">No devices found</div></td></tr>';return;}
+  tb.innerHTML=list.map(function(d){
+    var asgn=d.assignedTo?DB.staff.find(function(s){return s.id===d.assignedTo;}):null;
+    var wd=wDays(d.warranty);
+    var wB=wd===null?badge('bx','—'):wd<0?badge('br','Expired'):wd<90?badge('ba',wd+'d'):badge('bg',wd+'d');
+    return'<tr><td><span style="cursor:pointer;font-weight:500;font-family:var(--font-mono);font-size:12px" onclick="viewDevice(\''+d.id+'\')">'+d.name+'</span></td>'+
+      '<td>'+d.type+'</td><td style="font-size:12px;color:var(--text2)">'+(d.model||'—')+'</td>'+
+      '<td>'+(d.dept||'—')+'</td><td style="font-size:12px">'+(d.building||'—')+'</td>'+
+      '<td style="font-size:12px">'+(asgn?asgn.lastName+', '+asgn.firstName:'<span style="color:var(--text3)">Unassigned</span>')+'</td>'+
+      '<td>'+statusBadge(d.status)+'</td><td>'+wB+'</td>'+
+      '<td><div class="tbl-actions"><button class="tbl-btn" onclick="viewDevice(\''+d.id+'\')">View</button><button class="tbl-btn" onclick="editDeviceFn(\''+d.id+'\')">Edit</button><button class="tbl-btn del" onclick="delDevice(\''+d.id+'\')">Del</button></div></td></tr>';
+  }).join('');
+}
+
+function showTab(name,el){
+  document.querySelectorAll('[id^="tab-"]').forEach(function(e){e.style.display='none';});
+  document.querySelectorAll('.tab').forEach(function(e){e.classList.remove('active');});
+  gid('tab-'+name).style.display='block';
+  if(el)el.classList.add('active');
+  if(name==='dept')renderTabDept();
+  if(name==='bldg')renderTabBldg();
+  if(name==='warr')renderTabWarr();
+  if(name==='surp')renderTabSurp();
+  if(name==='adobe')renderTabAdobe();
+  if(name==='shist'){
+    var sortedStaffH=DB.staff.slice().sort(function(a,b){var an=a.firstName.toLowerCase(),bn=b.firstName.toLowerCase();return an<bn?-1:an>bn?1:0;});
+    var sel=gid('hist-sel');
+    sel.innerHTML='<option value="">Select staff member...</option>'+sortedStaffH.map(function(s){return'<option value="'+s.id+'">'+s.firstName+' '+s.lastName+'</option>';}).join('');
+    sel.value='';
+    var hr=gid('hist-results');if(hr)hr.innerHTML='';
+  }
+}
+
+function renderTabDept(){
+  var el=gid('tab-dept');if(!el)return;
+  var rows=DB.departments.map(function(dept){
+    var devs=DB.devices.filter(function(d){return d.dept===dept;});
+    return{dept:dept,total:devs.length,active:devs.filter(function(d){return d.status==='Active';}).length,laptops:devs.filter(function(d){return d.type==='Laptop';}).length,desktops:devs.filter(function(d){return d.type==='Desktop';}).length};
+  }).filter(function(r){return r.total>0;});
+  el.innerHTML=exportBtn('exportDept()')+'<div class="table-wrap"><table><thead><tr><th>Department</th><th>Total</th><th>Active</th><th>Laptops</th><th>Desktops</th><th>Other</th></tr></thead><tbody>'+
+    (rows.length?rows.map(function(r){return'<tr><td>'+r.dept+'</td><td class="mono">'+r.total+'</td><td class="mono">'+r.active+'</td><td class="mono">'+r.laptops+'</td><td class="mono">'+r.desktops+'</td><td class="mono">'+(r.total-r.laptops-r.desktops)+'</td></tr>';}).join(''):'<tr><td colspan="6"><div class="empty">No data yet</div></td></tr>')+
+    '</tbody></table></div>';
+}
+
+function renderTabBldg(){
+  var el=gid('tab-bldg');if(!el)return;
+  var allTypes=[].concat.apply([],DB.devices.map(function(d){return[d.type];})).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var rows=DB.buildings.map(function(b){
+    var devs=DB.devices.filter(function(d){return d.building===b;});
+    var types={};devs.forEach(function(d){types[d.type]=(types[d.type]||0)+1;});
+    return{b:b,total:devs.length,types:types};
+  });
+  el.innerHTML=exportBtn('exportBldg()')+'<div class="table-wrap"><table><thead><tr><th>Building</th><th>Total</th>'+allTypes.map(function(t){return'<th>'+t+'</th>';}).join('')+'</tr></thead><tbody>'+
+    rows.map(function(r){return'<tr><td>'+r.b+'</td><td class="mono">'+r.total+'</td>'+allTypes.map(function(t){return'<td class="mono">'+(r.types[t]||0)+'</td>';}).join('')+'</tr>';}).join('')+
+    '</tbody></table></div>';
+}
+
+function renderStaffHist(){
+  var id=gid('hist-sel').value;
+  var el=gid('hist-results');
+  if(!id){el.innerHTML='';return;}
+  var s=DB.staff.find(function(x){return x.id===id;});if(!s){el.innerHTML='';return;}
+  var devs=DB.devices.filter(function(d){
+    return d.assignedTo===id||(d.history||[]).some(function(h){return h.event&&h.event.indexOf(s.lastName+', '+s.firstName)>=0;});
+  });
+  el.innerHTML=(devs.length?exportBtn('exportStaffHist()'):'')+(devs.length?'<div class="table-wrap"><table><thead><tr><th>Device</th><th>Type</th><th>Model</th><th>Status</th><th>Acquired</th><th>Surplus Date</th></tr></thead><tbody>'+
+    devs.map(function(d){return'<tr><td class="mono" style="cursor:pointer" onclick="viewDevice(\''+d.id+'\')">'+d.name+'</td><td>'+d.type+'</td><td>'+(d.model||'—')+'</td><td>'+statusBadge(d.status)+'</td><td class="mono">'+(d.acquired||'—')+'</td><td class="mono">'+(d.surplusDate||'—')+'</td></tr>';}).join('')+
+    '</tbody></table></div>':'<div class="empty">No history found.</div>');
+}
+
+function inDR(ds,fId,tId){
+  var f=gid(fId)&&gid(fId).value,t=gid(tId)&&gid(tId).value;
+  if(!ds)return!f&&!t;
+  if(f&&ds<f)return false;
+  if(t&&ds>t)return false;
+  return true;
+}
+function drBar(prefix,fn){
+  return'<div class="dr-bar"><span>Date range:</span>'+
+    '<span style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">From</span>'+
+    '<input type="date" id="'+prefix+'-f" class="fi" style="width:150px" onchange="'+fn+'">'+
+    '<span style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">To</span>'+
+    '<input type="date" id="'+prefix+'-t" class="fi" style="width:150px" onchange="'+fn+'">'+
+    '<button class="tbl-btn" onclick="clearDR(\''+prefix+'\',\''+fn+'\')">Clear</button></div>';
+}
+function clearDR(prefix,fn){
+  var f=gid(prefix+'-f');if(f)f.value='';
+  var t=gid(prefix+'-t');if(t)t.value='';
+  eval(fn);
+}
+
+function renderTabWarr(){
+  var el=gid('tab-warr');if(!el)return;
+  var thr=DB.warrantyDays||90,fi='warr-f',ti='warr-t';
+  var wfFrom=gid('warr-f')&&gid('warr-f').value||'';
+  var wtTo=gid('warr-t')&&gid('warr-t').value||'';
+  var hideSurp=gid('warr-hide-surp')&&gid('warr-hide-surp').checked;
+  var expiring=DB.devices.filter(function(d){var n=wDays(d.warranty);return n!==null&&n>=0&&n<=thr&&inDR(d.warranty,fi,ti)&&(!hideSurp||d.status!=='Surplus');}).sort(function(a,b){return wDays(a.warranty)-wDays(b.warranty);});
+  var expired=DB.devices.filter(function(d){var n=wDays(d.warranty);return n!==null&&n<0&&inDR(d.warranty,fi,ti)&&(!hideSurp||d.status!=='Surplus');});
+  var refresh=DB.devices.filter(function(d){var a=ageDays(d.acquired);return a!==null&&a>=(365*3)&&d.status!=='Surplus'&&inDR(d.acquired,fi,ti);}).sort(function(a,b){return ageDays(b.acquired)-ageDays(a.acquired);});
+  function tbl(devs,cols){
+    if(!devs.length)return'<div class="empty" style="margin-bottom:20px">None found</div>';
+    return'<div class="table-wrap" style="margin-bottom:20px"><table><thead><tr>'+cols.map(function(c){return'<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'+
+      devs.map(function(d){var n=wDays(d.warranty),a=ageDays(d.acquired);
+        var statusCol=d.status==='Surplus'?badge('bx','Surplused'):(n!==null?badge(n<0?'br':n<30?'br':'ba',n<0?'Expired':n+'d left'):'—');
+        return'<tr><td class="mono" style="cursor:pointer" onclick="viewDevice(\''+d.id+'\')">'+d.name+'</td><td>'+d.type+'</td><td>'+(d.dept||'—')+'</td><td>'+(d.building||'—')+'</td><td class="mono">'+fmtDate(d.warranty)+'</td>'+
+          '<td>'+statusCol+'</td>'+
+          (cols.length>6?'<td class="mono">'+fmtDate(d.acquired)+'</td><td>'+(a!==null?badge('ba',Math.floor(a/365)+'yr '+Math.floor((a%365)/30)+'mo'):'—')+'</td>':'')+'</tr>';
+      }).join('')+'</tbody></table></div>';
+  }
+  el.innerHTML=drBar('warr','renderTabWarr()')+exportBtn('exportWarr()')+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">'+
+    '<input type="checkbox" id="warr-hide-surp" onchange="renderTabWarr()" style="cursor:pointer"'+(hideSurp?' checked':'')+'>'+
+    '<label for="warr-hide-surp" style="font-family:var(--font-mono);font-size:11px;cursor:pointer;color:var(--text2)">Hide surplused devices</label></div>'+
+    '<div style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:8px">Expired Warranties ('+expired.length+')</div>'+tbl(expired,['Device','Type','Dept','Building','Warranty Exp.','Status'])+
+    '<div style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:8px">Expiring Within '+thr+' Days ('+expiring.length+')</div>'+tbl(expiring,['Device','Type','Dept','Building','Expires','Days Left'])+
+    '<div style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:8px">Due for Refresh 3+ Years ('+refresh.length+')</div>'+tbl(refresh,['Device','Type','Dept','Building','Acquired','Age','','']);
+  // Restore date range values after innerHTML rebuild
+  if(wfFrom&&gid('warr-f'))gid('warr-f').value=wfFrom;
+  if(wtTo&&gid('warr-t'))gid('warr-t').value=wtTo;
+}
+
+function renderTabSurp(){
+  var el=gid('tab-surp');if(!el)return;
+  var fi='surp-f',ti='surp-t';
+  var surplused=DB.devices.filter(function(d){return(d.status==='Surplus'||d.surplusDate)&&inDR(d.surplusDate,fi,ti);}).sort(function(a,b){return(b.surplusDate||'').localeCompare(a.surplusDate||'');});
+  el.innerHTML=drBar('surp','renderTabSurp()')+exportBtn('exportSurp()')+
+    '<div style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:8px">Surplused Devices ('+surplused.length+')</div>'+
+    (surplused.length?'<div class="table-wrap"><table><thead><tr><th>Device</th><th>Type</th><th>Model</th><th>Dept</th><th>Building</th><th>Last Assigned</th><th>Surplus Date</th><th>Surplus ID</th><th>Acquired</th></tr></thead><tbody>'+
+      surplused.map(function(d){var asgn=d.assignedTo?DB.staff.find(function(s){return s.id===d.assignedTo;}):null;
+        return'<tr><td class="mono" style="cursor:pointer" onclick="viewDevice(\''+d.id+'\')">'+d.name+'</td><td>'+d.type+'</td><td style="color:var(--text2)">'+(d.model||'—')+'</td><td>'+(d.dept||'—')+'</td><td>'+(d.building||'—')+'</td>'+
+          '<td style="font-size:12px">'+(asgn?asgn.lastName+', '+asgn.firstName:'—')+'</td>'+
+          '<td class="mono">'+fmtDate(d.surplusDate)+'</td><td class="mono">'+(d.surplusId||'—')+'</td><td class="mono">'+fmtDate(d.acquired)+'</td></tr>';
+      }).join('')+'</tbody></table></div>':'<div class="empty">No surplused devices found</div>');
+}
+
+function exportAdobe(){
+  var licensed=DB.staff.filter(function(s){return s.adobe==='Yes';}).sort(function(a,b){
+    var an=a.lastName.toLowerCase(),bn=b.lastName.toLowerCase();return an<bn?-1:an>bn?1:0;
+  });
+  var headers=['Last Name','First Name','Department','Team','Email','Status'];
+  var rows=licensed.map(function(s){return[s.lastName,s.firstName,s.dept||'',s.team||'',s.email||'',s.status||''];});
+  downloadCSV('adobe-licenses',headers,rows);
+}
+function renderAdobeSort(col){
+  if(adobeSort.col===col){adobeSort.dir*=-1;}else{adobeSort.col=col;adobeSort.dir=1;}
+  renderTabAdobe();
+}
+function renderTabAdobe(){
+  var el=gid('tab-adobe');if(!el)return;
+  var allStaff=DB.staff.filter(function(s){return s.status==='Active';});
+  var licensed=DB.staff.filter(function(s){return s.adobe==='Yes';});
+  var unlicensed=DB.staff.filter(function(s){return s.adobe!=='Yes';});
+  var licensedActive=licensed.filter(function(s){return s.status==='Active';});
+
+  // Summary by Department
+  var deptRows=DB.departments.map(function(dept){
+    var total=allStaff.filter(function(s){return s.dept===dept;}).length;
+    var lic=licensed.filter(function(s){return s.dept===dept;}).length;
+    return{dept:dept,total:total,licensed:lic};
+  });
+
+  // Summary by Team
+  var teamRows=DB.teams.map(function(team){
+    var lic=licensed.filter(function(s){return s.team===team;}).length;
+    return{team:team,licensed:lic};
+  }).filter(function(r){return r.licensed>0;});
+
+  // Sort licensed staff
+  var sortedLicensed=licensed.slice().sort(function(a,b){
+    var col=adobeSort.col;
+    var av='',bv='';
+    if(col==='name'){av=(a.lastName+a.firstName).toLowerCase();bv=(b.lastName+b.firstName).toLowerCase();}
+    else{av=(a[col]||'').toLowerCase();bv=(b[col]||'').toLowerCase();}
+    return av<bv?-1*adobeSort.dir:av>bv?1*adobeSort.dir:0;
+  });
+
+  // Build sortable headers for licensed staff table
+  var adobeCols=[
+    {key:'name',label:'Name'},
+    {key:'dept',label:'Department'},
+    {key:'team',label:'Team'},
+    {key:'email',label:'Email'},
+    {key:'status',label:'Status'}
+  ];
+  var thead=adobeCols.map(function(c){
+    var icon=adobeSort.col===c.key?(adobeSort.dir===1?' ▲':' ▼'):'';
+    return'<th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="renderAdobeSort(\''+c.key+'\')">'+c.label+icon+'</th>';
+  }).join('');
+
+  el.innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px">'+
+      '<div class="stat-card"><div class="stat-label">Total Licensed</div><div class="stat-value">'+licensed.length+'</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Active Licensed</div><div class="stat-value">'+licensedActive.length+'</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Total Staff</div><div class="stat-value">'+DB.staff.length+'</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Unlicensed</div><div class="stat-value warn">'+unlicensed.length+'</div></div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">'+
+      '<div>'+
+        '<div style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:8px">Licenses by Department</div>'+
+        '<div class="table-wrap"><table><thead><tr><th>Department</th><th>Active Staff</th><th>Licensed</th><th>Unlicensed</th></tr></thead><tbody>'+
+          deptRows.map(function(r){
+            return'<tr><td>'+r.dept+'</td><td class="mono">'+r.total+'</td><td class="mono">'+badge('bg',String(r.licensed))+'</td><td class="mono">'+(r.total-r.licensed>0?badge('ba',String(r.total-r.licensed)):badge('bx','0'))+'</td></tr>';
+          }).join('')+
+          '<tr style="font-weight:500;border-top:2px solid var(--border)"><td>Total</td><td class="mono">'+allStaff.length+'</td><td class="mono">'+badge('bg',String(licensed.length))+'</td><td class="mono">'+(allStaff.length-licensedActive.length>0?badge('ba',String(allStaff.length-licensedActive.length)):badge('bx','0'))+'</td></tr>'+
+        '</tbody></table></div>'+
+      '</div>'+
+      '<div>'+
+        '<div style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:8px">Licenses by Team</div>'+
+        '<div class="table-wrap"><table><thead><tr><th>Team</th><th>Licensed</th></tr></thead><tbody>'+
+          (teamRows.length?teamRows.map(function(r){
+            return'<tr><td>'+r.team+'</td><td>'+badge('bg',String(r.licensed))+'</td></tr>';
+          }).join(''):'<tr><td colspan="2"><div class="empty">No data</div></td></tr>')+
+        '</tbody></table></div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:8px">Licensed Staff ('+licensed.length+')</div>'+
+    exportBtn('exportAdobe()')+
+    '<div class="table-wrap"><table><thead><tr>'+thead+'</tr></thead><tbody>'+
+      (sortedLicensed.length?sortedLicensed.map(function(s){
+        return'<tr><td><span style="cursor:pointer;font-weight:500" onclick="viewStaff(&quot;'+s.id+'&quot;)">'+s.lastName+', '+s.firstName+'</span></td>'+
+          '<td>'+(s.team||'—')+'</td><td>'+(s.dept||'—')+'</td>'+
+          '<td style="font-size:12px;color:var(--text2)">'+(s.email||'—')+'</td>'+
+          '<td>'+badge(s.status==='Active'?'bg':'br',s.status||'—')+'</td></tr>';
+      }).join(''):'<tr><td colspan="5"><div class="empty">No licensed staff found</div></td></tr>')+
+    '</tbody></table></div>';
+}
+
+function renderSettings(){
+  function tagList(elId,arr,type){
+    var el=gid(elId);if(!el)return;
+    el.innerHTML=arr.map(function(item,i){return'<div class="stag">'+item+'<button onclick="removeTag(\''+type+'\','+i+')">&times;</button></div>';}).join('');
+  }
+  tagList('dept-list',DB.departments,'dept');
+  tagList('dtype-list',DB.deviceTypes,'dtype');
+  tagList('dstatus-list',DB.deviceStatuses,'dstatus');
+  tagList('bldg-list',DB.buildings,'bldg');
+  var wd=gid('warr-days');if(wd)wd.value=DB.warrantyDays||90;
+}
+function removeTag(type,i){
+  var map={team:'teams',dept:'departments',dtype:'deviceTypes',dstatus:'deviceStatuses',bldg:'buildings'};
+  DB[map[type]].splice(i,1);saveAndPush();renderSettings();populateFilters();
+}
+function addItem(type){
+  var map={team:['new-team','teams'],dept:['new-dept','departments'],dtype:['new-dtype','deviceTypes'],dstatus:['new-dstatus','deviceStatuses'],bldg:['new-bldg','buildings']};
+  var m=map[type];var el=gid(m[0]);var v=el&&el.value.trim();
+  if(v&&DB[m[1]].indexOf(v)<0){DB[m[1]].push(v);saveAndPush();renderSettings();populateFilters();el.value='';}
+}
+function saveWarrDays(){
+  var v=parseInt(gid('warr-days').value);
+  if(v>0){DB.warrantyDays=v;saveAndPush();var m=gid('warr-msg');m.style.display='inline';setTimeout(function(){m.style.display='none';},2000);}
+}
+function changePw(){
+  var np=gid('new-pw').value,cp=gid('confirm-pw').value,msg=gid('pw-msg');
+  msg.style.display='inline';
+  if(!np){msg.textContent='Password cannot be empty.';msg.style.color='var(--red)';return;}
+  if(np!==cp){msg.textContent='Passwords do not match.';msg.style.color='var(--red)';return;}
+  DB.password=np;saveAndPush();
+  msg.textContent='Updated.';msg.style.color='var(--green)';
+  gid('new-pw').value='';gid('confirm-pw').value='';
+  setTimeout(function(){msg.style.display='none';},3000);
+}
+function exportData(){
+  var blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='pbs-asset-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function importData(e){
+  var file=e.target.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(ev){try{DB=JSON.parse(ev.target.result);saveAndPush();init();alert('Imported successfully.');}catch(err){alert('Invalid file.');}};
+  r.readAsText(file);
+}
+function clearAll(){
+  if(!confirm('Delete ALL data permanently?'))return;
+  if(!confirm('Really delete everything?'))return;
+  DB.staff=[];DB.devices=[];saveAndPush();init();
+}
+loadLocal();
+</script>
+</body>
+</html>
